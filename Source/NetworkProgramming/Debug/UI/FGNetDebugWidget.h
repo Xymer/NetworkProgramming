@@ -3,13 +3,15 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Blueprint/UserWidget.h"
+#include "FGNetDebugWidget.generated.h"
 
 /**
  * 
  */
-class NETWORKPROGRAMMING_API FGNetDebugWidget
+UCLASS()
+class NETWORKPROGRAMMING_API UFGNetDebugWidget : public UUserWidget
 {
-public:
-	FGNetDebugWidget();
-	~FGNetDebugWidget();
+	GENERATED_BODY()
+	
 };

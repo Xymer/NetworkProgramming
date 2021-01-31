@@ -3,10 +3,3 @@
 
 #include "FGNetDebugWidget.h"
 
-FGNetDebugWidget::FGNetDebugWidget()
-{
-}
-
-FGNetDebugWidget::~FGNetDebugWidget()
-{
-}

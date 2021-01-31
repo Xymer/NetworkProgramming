@@ -8,6 +8,8 @@ class USpringArmComponent;
 class UFGMovementComponent;
 class UStaticMeshComponent;
 class USphereComponent;
+class UFGPlayerSettings;
+//class UFGNetDebugWidget;
 
 UCLASS()
 class NETWORKPROGRAMMING_API AFGPlayer : public APawn
@@ -36,18 +38,9 @@ private:
 		UFGMovementComponent* MovementComponent;
 
 public:
-	UPROPERTY(EditAnywhere, Category = Movement)
-		float Acceleration = 500.0f;
-	UPROPERTY(EditAnywhere, Category = Movement, meta = (DisplayName = "TurnSpeed"))
-		float TurnSpeedDefault = 100.0f;
-	UPROPERTY(EditAnywhere, Category = Movement)
-		float MaxVelocity = 2000.0f;
-	UPROPERTY(EditAnywhere, Category = Movement, meta = (ClampMin = 0.0, ClampMax = 1.0))
-		float DefaultFriction = 0.75f;
-	UPROPERTY(EditAnywhere, Category = Movement, meta = (ClampMin = 0.0, ClampMax = 1.0))
-		float BrakingFriction = 500.0f;
-	UPROPERTY(EditAnywhere, Category = Movement, meta = (DisplayName = "Network Interpolation Speed"))
-		float NetworkInterpolationSpeed = 5.0f;
+	UPROPERTY(EditAnywhere, Category = PlayerSettings)
+		UFGPlayerSettings* PlayerSettings;
+
 
 public:
 	AFGPlayer();
@@ -57,6 +50,15 @@ private:
 	void Handle_Turn(float Value);
 	void Handle_BrakePressed();
 	void Handle_BrakeReleased();
+
+	void Handle_DebugMenuPressed();
+
+	void CreateDebugWidget();
+
+	//UPROPERTY(Transient)
+		//UFGNetDebugWidget* DebugMenuInstance = nullptr;
+
+	bool bShowDebugMenu = false;
 
 protected:
 	virtual void BeginPlay() override;
@@ -70,6 +72,9 @@ public:
 	UFUNCTION(BlueprintPure)
 		int32 GetPing() const;
 
+	/*UPROPERTY(EditAnywhere, Category = Debug)
+	TSubclassOf<UFGNetDebugWidget> DebugMenuClass;*/
+
 	UFUNCTION(Server, Unreliable)
 		void Server_SendLocation(const FVector& LocationToSend);
 
@@ -77,8 +82,12 @@ public:
 		void Multicast_SendLocation(const FVector& LocationToSend);
 
 	UFUNCTION(Server, Unreliable)
-		void Server_SendFaceDirection(const FQuat& LocationToSend);
+		void Server_SendFaceDirection(const float& LocationToSend);
 
 	UFUNCTION(NetMulticast, Unreliable)
-		void Multicast_SendFaceDirection(const FQuat& LocationToSend);
+		void Multicast_SendFaceDirection(const float& LocationToSend);
+
+	void ShowDebugMenu();
+	void HideDebugMenu();
+
 };

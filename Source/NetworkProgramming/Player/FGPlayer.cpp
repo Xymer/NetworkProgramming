@@ -7,7 +7,9 @@
 #include "Camera/CameraComponent.h"
 #include "Engine/NetDriver.h"
 #include "../Components/FGMovementComponent.h"
+#include "../Player/FGPlayerSettings.h"
 #include "../FGMovementStatics.h"
+#include "../Debug/UI/FGNetDebugWidget.h"
 
 
 AFGPlayer::AFGPlayer()
@@ -61,10 +63,15 @@ void AFGPlayer::BeginPlay()
 void AFGPlayer::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
-	const float Friction = IsBraking() ? BrakingFriction : DefaultFriction;
-	const float Alpha = FMath::Clamp(FMath::Abs(MovementVelocity / (MaxVelocity * 0.75f)), 0.0f, 1.0f);
-	const float TurnSpeed = FMath::InterpEaseOut(0.0f, TurnSpeedDefault, Alpha, 5.0f);
+	if (!ensure(PlayerSettings != nullptr))
+	{
+		return;
+	}
+	const float MaxVelocity = PlayerSettings->MaxVelocity;
+	const float Acceleration = PlayerSettings->Acceleration;
+	const float Friction = IsBraking() ? PlayerSettings->BrakingFriction : PlayerSettings->Friction;
+	const float Alpha = FMath::Clamp(FMath::Abs(MovementVelocity / (PlayerSettings->MaxVelocity * 0.75f)), 0.0f, 1.0f);
+	const float TurnSpeed = FMath::InterpEaseOut(0.0f, PlayerSettings->TurnSpeedDefault, Alpha, 5.0f);
 	const float MovementDirection = MovementVelocity > 0.0f ? Turn : -Turn;
 
 	Yaw += (MovementDirection * TurnSpeed) * DeltaTime;
@@ -76,7 +83,7 @@ void AFGPlayer::Tick(float DeltaTime)
 	}
 	else
 	{
-		SetActorLocation(FMath::Lerp(GetActorLocation(), DesiredLocation, DeltaTime * NetworkInterpolationSpeed));
+		SetActorLocation(FMath::Lerp(GetActorLocation(), DesiredLocation, DeltaTime /** NetworkInterpolationSpeed*/));
 	}
 
 	FFGFrameMovement FrameMovement = MovementComponent->CreateFrameMovement();
@@ -92,7 +99,7 @@ void AFGPlayer::Tick(float DeltaTime)
 	if (IsLocallyControlled())
 	{
 		Server_SendLocation(GetActorLocation());
-		Server_SendFaceDirection(GetActorRotation().Quaternion());
+		Server_SendFaceDirection(GetActorRotation().Yaw);
 	}
 }
 
@@ -106,7 +113,7 @@ void AFGPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	PlayerInputComponent->BindAction(TEXT("Brake"), IE_Pressed, this, &AFGPlayer::Handle_BrakePressed);
 	PlayerInputComponent->BindAction(TEXT("Brake"), IE_Released, this, &AFGPlayer::Handle_BrakeReleased);
 
-	
+	//PlayerInputComponent->BindAction(TEXT("DebugMenu"), IE_Pressed, this, &AFGPlayer::Handle_DebugMenuPressed);
 }
 
 int32 AFGPlayer::GetPing() const
@@ -132,15 +139,15 @@ void AFGPlayer::Multicast_SendLocation_Implementation(const FVector& LocationToS
 	}
 }
 
-void AFGPlayer::Server_SendFaceDirection_Implementation(const FQuat& FaceDirectionToSend)
+void AFGPlayer::Server_SendFaceDirection_Implementation(const float& FaceDirectionToSend)
 {
 	Multicast_SendFaceDirection(FaceDirectionToSend);
 }
 
-void AFGPlayer::Multicast_SendFaceDirection_Implementation(const FQuat& FaceDirectionToSend)
+void AFGPlayer::Multicast_SendFaceDirection_Implementation(const float& FaceDirectionToSend)
 {
 	if (!IsLocallyControlled())
 	{
-		MovementComponent->SetFacingRotation(FaceDirectionToSend);
+		MovementComponent->SetFacingRotation(FQuat(FVector::UpVector, FMath::DegreesToRadians(FaceDirectionToSend)));
 	}
 }
