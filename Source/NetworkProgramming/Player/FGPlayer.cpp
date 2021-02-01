@@ -10,6 +10,7 @@
 #include "../Player/FGPlayerSettings.h"
 #include "../FGMovementStatics.h"
 #include "../Debug/UI/FGNetDebugWidget.h"
+#include "Blueprint/UserWidget.h"
 
 
 AFGPlayer::AFGPlayer()
@@ -54,10 +55,46 @@ void AFGPlayer::Handle_BrakeReleased()
 	bBrake = false;
 }
 
+void AFGPlayer::Handle_DebugMenuPressed()
+{
+	bShowDebugMenu = !bShowDebugMenu;
+
+	if (bShowDebugMenu)
+	{
+		ShowDebugMenu();
+	}
+	else
+	{
+		HideDebugMenu();
+	}
+}
+
+void AFGPlayer::CreateDebugWidget()
+{
+	if (DebugMenuClass == nullptr)
+	{
+		return;
+	}
+	if (!IsLocallyControlled())
+	{
+		return;
+	}
+	if (DebugMenuInstance == nullptr)
+	{
+		DebugMenuInstance = CreateWidget<UFGNetDebugWidget>(GetWorld(), DebugMenuClass);
+		DebugMenuInstance->AddToViewport();
+	}
+}
+
 void AFGPlayer::BeginPlay()
 {
 	Super::BeginPlay();
 	MovementComponent->SetUpdatedComponent(CollisionComponent);
+	CreateDebugWidget();
+	if (DebugMenuInstance != nullptr)
+	{
+		DebugMenuInstance->SetVisibility(ESlateVisibility::Collapsed);
+	}
 }
 
 void AFGPlayer::Tick(float DeltaTime)
@@ -113,7 +150,7 @@ void AFGPlayer::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 	PlayerInputComponent->BindAction(TEXT("Brake"), IE_Pressed, this, &AFGPlayer::Handle_BrakePressed);
 	PlayerInputComponent->BindAction(TEXT("Brake"), IE_Released, this, &AFGPlayer::Handle_BrakeReleased);
 
-	//PlayerInputComponent->BindAction(TEXT("DebugMenu"), IE_Pressed, this, &AFGPlayer::Handle_DebugMenuPressed);
+	PlayerInputComponent->BindAction(TEXT("DebugMenu"), IE_Pressed, this, &AFGPlayer::Handle_DebugMenuPressed);
 }
 
 int32 AFGPlayer::GetPing() const
@@ -150,4 +187,25 @@ void AFGPlayer::Multicast_SendFaceDirection_Implementation(const float& FaceDire
 	{
 		MovementComponent->SetFacingRotation(FQuat(FVector::UpVector, FMath::DegreesToRadians(FaceDirectionToSend)));
 	}
+}
+
+void AFGPlayer::ShowDebugMenu()
+{
+	CreateDebugWidget();
+
+	if (DebugMenuInstance != nullptr)
+	{
+		DebugMenuInstance->SetVisibility(ESlateVisibility::Visible);
+		DebugMenuInstance->BP_OnShowWidget();
+	}
+}
+
+void AFGPlayer::HideDebugMenu()
+{
+	if (DebugMenuInstance == nullptr)
+	{
+		return;
+	}
+	DebugMenuInstance->SetVisibility(ESlateVisibility::Collapsed);
+	DebugMenuInstance->BP_OnHideWidget();
 }

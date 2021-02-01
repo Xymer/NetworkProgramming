@@ -9,7 +9,7 @@ class UFGMovementComponent;
 class UStaticMeshComponent;
 class USphereComponent;
 class UFGPlayerSettings;
-//class UFGNetDebugWidget;
+class UFGNetDebugWidget;
 
 UCLASS()
 class NETWORKPROGRAMMING_API AFGPlayer : public APawn
@@ -55,8 +55,8 @@ private:
 
 	void CreateDebugWidget();
 
-	//UPROPERTY(Transient)
-		//UFGNetDebugWidget* DebugMenuInstance = nullptr;
+	UPROPERTY(Transient)
+		UFGNetDebugWidget* DebugMenuInstance = nullptr;
 
 	bool bShowDebugMenu = false;
 
@@ -72,8 +72,8 @@ public:
 	UFUNCTION(BlueprintPure)
 		int32 GetPing() const;
 
-	/*UPROPERTY(EditAnywhere, Category = Debug)
-	TSubclassOf<UFGNetDebugWidget> DebugMenuClass;*/
+	UPROPERTY(EditAnywhere, Category = Debug)
+		TSubclassOf<UFGNetDebugWidget> DebugMenuClass;
 
 	UFUNCTION(Server, Unreliable)
 		void Server_SendLocation(const FVector& LocationToSend);
